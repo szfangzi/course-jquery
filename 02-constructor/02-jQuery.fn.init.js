@@ -1,48 +1,109 @@
-// 把window和undefined作为形参，可以缩短作用域链的搜索，以及方便压缩jQuery代码
 (function(window, undefined){
   var jQuery = (function(){
-
-    // jQuery构造函数
     var jQuery = function(selector, context){
       var rootjQuery = '';
-      // 如果不通过返回其他构造函数的实例对象，那么就无法实现简写 - $()创建jQuery对象，得通过new $()来创建了
       return new jQuery.fn.init(selector, context, rootjQuery);
     };
-    // 一堆局部变量，通过自调用匿名函数把这些局部变量跟其他模块隔离开来
 
-    // 构造函数的原型对象，jQuery.fn是jQuery.prototype的简写，可以少写7个字符，以方便拼写
+    // 检测selector是否是复杂的html代码
+    var quickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
+        rsingleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/;
+
     jQuery.fn = jQuery.prototype = {
       constructor:jQuery,
-      init:function(selector, context, rootjQuery){}
-      // 一堆原型属性和方法，比如selector、length、size()、toArray()
+      init:function(selector, context, rootjQuery){
+        var match, elem, ret, doc;
+        // jQuery入口函数12分支
+        // 分支1 $(""), $(null), $(undefined)
+        if (!selector) {
+          return this;
+        }
+
+        // 分支2 $(DOMElement)
+        if(selector.nodeType){
+          this.context = this[0] = selector;
+          this.length = 1;
+          return this;
+        }
+
+        // 分支3 字符串 body
+        if(selector === 'body' && !context && document.body){
+          this.context = document;
+          this[0] = document.body;
+          this.selector = selector;
+          this.length = 1;
+          return this;
+        }
+
+        // 分支 其他字符串
+        if(typeof selector === 'string'){
+          // 是简单html标签 还是id或者其他选择器等复杂html代码？
+          if(selector.charAt(0) === '<' && selector.charAt(selector.length - 1) === '>' && selector.length >= 3 ){
+            match = [null, selector, null];
+          }else{
+            // 数组match 第一个元素为selector，第二个元素为匹配的html代码或undefined，第三个元素为匹配的id或undefined
+            match = quickExpr.exec(selector);
+          }
+
+          // 如果match[1]不是undefined，或者match[2]不是undefined且未传入context
+          if( match && (match[1] || match[2] && !context) ){
+
+            if(match[1]){
+              context = context instanceof jQuery ? context[0] : context;
+              doc = (context ? context.ownerDocument || context : document);
+
+              // 检测是否是单独的标签，不包含尖括号，不包含属性，可以自关闭或不关闭
+              // 数组ret第一个元素为selector，第二个元素为标签名
+              ret = rsingleTag.exec(selector);
+              // 分支4 单独标签
+              if(ret){
+                // if(jQuery.isPlainObject(context)){
+                //   selector = [doc.createElement(ret[1])];
+                //   jQuery.fn.attr.call(selector, context, true);
+                // }else{
+                //   selector = [doc.createElement(ret[1])];
+                // }
+
+              // 分支5 复杂的html代码
+              }else{
+                // ret = jQuery.buildFragment( [ match[1] ], [doc] );
+                // selector = (ret.cacheable ? jQuery.clone(ret.fragment) : ret.fragment).childNodes;
+              }
+              // return jQuery.merge(this, selector);
+
+            // 分支6 是#id，且未传入context
+            }else{
+              elem = document.getElementById(match[2]);
+              if(elem){
+                if(elem.id !== match[2]){
+                  // return rootjQuery.find(selector)
+                }
+
+                this.length = 1;
+                this[0] = elem;
+              }
+
+              this.context = document;
+              this.selector = selector;
+              return this;
+            }
+
+          }
+
+        }
+
+      }
+
     };
 
-    // 这样通过init创建的jQuery对象就可以访问jQuery.fn的属性和方法了
     jQuery.fn.init.prototype = jQuery.fn;
     jQuery.extend = jQuery.fn.extend = function(){};
     jQuery.extend({
-      // 一堆静态属性和方法，比如noConflict()、isReady等
+
     });
     return jQuery;
   })();
 
-  // 工具方法 Utilities
-  // 回调函数列表 Callbacks Object
-  // 异步队列 Deferred Object
-  // 浏览器功能测试 Support
-  // 数据缓存 Data
-  // 队列 Queue
-  // 属性操作 Attributes
-  // 事件系统 Events
-  // 选择器 Sizzle
-  // DOM 遍历 Traversing
-  // DOM 操作 Manipulation
-  // 样式操作 CSS(计算样式、内联样式)
-  // 异步请求 Ajax
-  // 动画 Effects
-  // 坐标 Offset、 尺寸 Dimensions
-
   window.jQuery = window.$ = jQuery;
 
-// 不传递undefined，是因为老版本浏览器undefined允许被修改的，万一在外部undefined被修改了还传进来了
 })(window)
