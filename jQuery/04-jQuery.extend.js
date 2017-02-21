@@ -1,11 +1,7 @@
 (function (window, undefined) {
 
   var class2type = {};
-  ['Boolean', 'Number', 'String', 'Function', 'Array', 'Date', 'RegExp', 'Object', 'Error', 'Symbol']
-      .forEach(function( name ) {
-        class2type[ "[object " + name + "]" ] = name.toLowerCase();
-      });
-
+  var classList = ['Boolean', 'Number', 'String', 'Function', 'Array', 'Date', 'RegExp', 'Object', 'Error', 'Symbol', 'Null', 'Undefined'];
   var toString = class2type.toString;
 
 
@@ -82,21 +78,29 @@
 
     };
     jQuery.extend({
+      // type: function (obj) {
+      //   if (obj == null) {
+      //     return obj + "";
+      //   }
+      //   return typeof obj === "object" || typeof obj === "function" ?
+      //     class2type[toString.call(obj)] || "object" :
+      //     typeof obj;
+      // },
       type: function (obj) {
-        if (obj == null) {
-          return obj + "";
-        }
-        return typeof obj === "object" || typeof obj === "function" ?
-          class2type[toString.call(obj)] || "object" :
-          typeof obj;
+        return class2type[toString.call(obj)];
       },
       isPlainObject: function () {
 
       },
       isArray: Array.isArray,
       isFunction: function (obj) {
-        return jQuery.type( obj ) === "function";
+        return jQuery.type(obj) === "function";
       }
+    });
+
+    // 生成类型对象
+    classList.forEach(function (name) {
+      class2type["[object " + name + "]"] = name.toLowerCase();
     });
 
 
@@ -107,3 +111,4 @@
   window.jQuery = window.$ = jQuery;
 
 })(window)
+
