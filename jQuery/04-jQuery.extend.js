@@ -1,137 +1,104 @@
-(function(window, undefined){
-  var jQuery = (function(){
-    var jQuery = function(selector, context){
+(function (window, undefined) {
+
+  var class2type = {};
+  ['Boolean', 'Number', 'String', 'Function', 'Array', 'Date', 'RegExp', 'Object', 'Error', 'Symbol']
+      .forEach(function( name ) {
+        class2type[ "[object " + name + "]" ] = name.toLowerCase();
+      });
+
+  var toString = class2type.toString;
+
+
+  var jQuery = (function () {
+    var jQuery = function (selector, context) {
       var rootjQuery = '';
       return new jQuery.fn.init(selector, context, rootjQuery);
     };
 
-    // 检测selector是否是复杂的html代码
-    var quickExpr = /^(?:\s*(<[\w\W]+>)[^>]*|#([\w-]*))$/,
-        rsingleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/;
-
     jQuery.fn = jQuery.prototype = {
-      constructor:jQuery,
-      init:function(selector, context, rootjQuery){
-        var match, elem, ret, doc;
-        // jQuery入口函数12分支
-        // 分支1 $(""), $(null), $(undefined)
-        if (!selector) {
-          return this;
-        }
-
-        // 分支2 $(DOMElement)
-        if(selector.nodeType){
-          this.context = this[0] = selector;
-          this.length = 1;
-          return this;
-        }
-
-        // 分支3 字符串 body
-        if(selector === 'body' && !context && document.body){
-          this.context = document;
-          this[0] = document.body;
-          this.selector = selector;
-          this.length = 1;
-          return this;
-        }
-
-        // 分支 其他字符串
-        if(typeof selector === 'string'){
-          // 是简单html标签 还是id或者其他选择器等复杂html代码？
-          if(selector.charAt(0) === '<' && selector.charAt(selector.length - 1) === '>' && selector.length >= 3 ){
-            match = [null, selector, null];
-          }else{
-            // 数组match 第一个元素为selector，第二个元素为匹配的html代码或undefined，第三个元素为匹配的id或undefined
-            match = quickExpr.exec(selector);
-          }
-
-          // 如果match[1]不是undefined，或者match[2]不是undefined且未传入context
-          if( match && (match[1] || match[2] && !context) ){
-
-            if(match[1]){
-              context = context instanceof jQuery ? context[0] : context;
-              doc = (context ? context.ownerDocument || context : document);
-
-              // 检测是否是单独的标签，不包含尖括号，不包含属性，可以自关闭或不关闭
-              // 数组ret第一个元素为selector，第二个元素为标签名
-              ret = rsingleTag.exec(selector);
-              // 分支4 单独标签
-              if(ret){
-                // if(jQuery.isPlainObject(context)){
-                //   selector = [doc.createElement(ret[1])];
-                //   jQuery.fn.attr.call(selector, context, true);
-                // }else{
-                //   selector = [doc.createElement(ret[1])];
-                // }
-
-              // 分支5 复杂的html代码
-              }else{
-                // ret = jQuery.buildFragment( [ match[1] ], [doc] );
-                // selector = (ret.cacheable ? jQuery.clone(ret.fragment) : ret.fragment).childNodes;
-              }
-              // return jQuery.merge(this, selector);
-
-            // 分支6 是#id，且未传入context
-            }else{
-              elem = document.getElementById(match[2]);
-              if(elem){
-                // ie6 ie7 部分老版本opera会根据name找而不是id,如果遇到这种情况,则调用sizzle去匹配
-                if(elem.id !== match[2]){
-                  // return rootjQuery.find(selector)
-                }
-
-                this.length = 1;
-                this[0] = elem;
-              }
-
-              this.context = document;
-              this.selector = selector;
-              return this;
-            }
-
-          // 分支7 选择器表达式 例如$('#app .a b')
-          }else if(!context || context.jQuery){
-            return (context || rootjQuery).find(selector);
-          }else{
-            return this.constructor(context).find(selector);
-          }
-
-        // 分支8 函数
-        }else if(jQuery.isFunction(selector)){
-          return rootjQuery.ready(selector);
-        }
-
-        // 分支9 jQuery对象
-        if(selector.selector !== undefined){
-          this.selector = selector.selector;
-          this.context = selector.context;
-        }
-
-        // 分支10 任意其他值
-        return jQuery.makeArray(selector, this);
-
-      }
-
+      constructor: jQuery,
+      init: function (selector, context, rootjQuery) { }
     };
 
     jQuery.fn.init.prototype = jQuery.fn;
-    jQuery.extend = jQuery.fn.extend = function(){};
-    jQuery.extend({
 
-    });
+    // 用于合并两个或多个对象的属性到第一个对象
+    jQuery.extend = jQuery.fn.extend = function () {
+      var options, name, src, copy, copyIsArray, clone, target = arguments[0] || {}, i = 1, length = arguments.length, deep = false;
 
-    jQuery.buildFragment = function (args, nodes, scripts){
-      var fragment, cacheable, cacheresults, doc, first = args[0];
+      // 是否deepcopy
+      if (typeof target === 'boolean') {
+        deep = target;
+        target = arguments[1] || {};
+        i = 2;
+      };
 
-      if(nodes && nodes[0]){
-        doc = nodes[0].ownerDocument || nodes[0];
+      // 如果target是个字符串 或者别的非函数非对象
+      if (typeof target !== 'object' && !jQuery.isFunction(target)) {
+        target = {};
+      };
+
+      // 如果只传了目标对象而没有传源对象，则把jQuery作为目标对象
+      if (length === i) {
+        target = this;
+        i--;
+      };
+
+      for (; i < length; i++) {
+        // 把源对象赋值给options
+        if ((options = arguments[i]) != null) {
+          for (name in options) {
+            src = target[name];
+            copy = options[name];
+
+            // 避免死循环
+            if (target === copy) {
+              continue;
+            }
+
+            // 深拷贝
+            if (deep && copy && (jQuery.isPlainObject(copy) || (copyIsArray = jQuery.isArray(copy)))) {
+              if (copyIsArray) {
+                copyIsArray = false;
+                clone = src && jQuery.isArray(src) ? src : [];
+
+              } else {
+                clone = src && jQuery.isPlainObject(src) ? src : {};
+              }
+
+              // Never move original objects, clone them
+              target[name] = jQuery.extend(deep, clone, copy);
+
+              // 浅拷贝
+            } else if (copy !== undefined) {
+              target[name] = copy;
+            }
+          }
+        }
       }
 
-      if(!doc.createDocumentFragment){
-        doc = document;
-      }
+      // 返回目标对象
+      return target;
 
     };
+    jQuery.extend({
+      type: function (obj) {
+        if (obj == null) {
+          return obj + "";
+        }
+        return typeof obj === "object" || typeof obj === "function" ?
+          class2type[toString.call(obj)] || "object" :
+          typeof obj;
+      },
+      isPlainObject: function () {
+
+      },
+      isArray: Array.isArray,
+      isFunction: function (obj) {
+        return jQuery.type( obj ) === "function";
+      }
+    });
+
 
     return jQuery;
   })();
