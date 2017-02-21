@@ -6,7 +6,7 @@
     };
 
     // 检测selector是否是复杂的html代码
-    var quickExpr = /^(?:#([\w-]+)|(\w+)|\.([\w-]+))$/,
+    var quickExpr = /^(?:\s*(<[\w\W]+>)[^>]*|#([\w-]*))$/,
         rsingleTag = /^<(\w+)\s*\/?>(?:<\/\1>|)$/;
 
     jQuery.fn = jQuery.prototype = {
@@ -75,6 +75,7 @@
             }else{
               elem = document.getElementById(match[2]);
               if(elem){
+                // ie6 ie7 部分老版本opera会根据name找而不是id,如果遇到这种情况,则调用sizzle去匹配
                 if(elem.id !== match[2]){
                   // return rootjQuery.find(selector)
                 }
@@ -88,9 +89,26 @@
               return this;
             }
 
+          // 分支7 选择器表达式 例如$('#app .a b')
+          }else if(!context || context.jQuery){
+            return (context || rootjQuery).find(selector);
+          }else{
+            return this.constructor(context).find(selector);
           }
 
+        // 分支8 函数
+        }else if(jQuery.isFunction(selector)){
+          return rootjQuery.ready(selector);
         }
+
+        // 分支9 jQuery对象
+        if(selector.selector !== undefined){
+          this.selector = selector.selector;
+          this.context = selector.context;
+        }
+
+        // 分支10 任意其他值
+        return jQuery.makeArray(selector, this);
 
       }
 
@@ -103,6 +121,7 @@
     });
     return jQuery;
   })();
+
 
   window.jQuery = window.$ = jQuery;
 
