@@ -16,7 +16,7 @@
 
   var class2type = {};
 
-  var classList = ['Boolean', 'Number', 'String', 'Function', 'Array', 'Date', 'RegExp', 'Object', 'Error', 'Symbol', 'Null', 'Undefined'];
+  var classList = ['Boolean', 'Number', 'String', 'Function', 'Array', 'Date', 'RegExp', 'Object', 'Error', 'Symbol', 'Null', 'Undefined', 'Window'];
 
   var toString = class2type.toString;
 
@@ -113,37 +113,40 @@
     };
     jQuery.extend({
       type: function (obj) {
-        if (obj == null) {
-          return obj + "";
-        }
-        return typeof obj === "object" || typeof obj === "function" ?
-          class2type[toString.call(obj)] || "object" :
-          typeof obj;
+        return class2type[toString.call(obj)];
       },
       // 只有通过对象直接量{}或者new Object()创建的对象，才返回true
       isPlainObject: function (obj) {
         var proto, Ctor;
 
-        // Detect obvious negatives
-        // Use toString instead of jQuery.type to catch host objects
-        if ( !obj || toString.call( obj ) !== "[object Object]" ) {
+        // 可以过滤掉undefined null new Date()等等
+        if (!obj || jQuery.type(obj) !== "object") {
           return false;
         }
 
+        // 获取原型
         proto = getProto(obj);
 
-        // Objects with no prototype (e.g., `Object.create( null )`) are plain
+        // Object.create( null )创建的对象原型为空，但也是纯粹对象
         if (!proto) {
           return true;
         }
 
-        // Objects with prototype are plain iff they were constructed by a global Object function
-        Ctor = hasOwn.call(proto, "constructor") && proto.constructor;
-        return typeof Ctor === "function" && fnToString.call(Ctor) === ObjectFunctionString;
+        // 通过其他构造函数生成的对象就不是纯粹对象
+        return obj.constructor === Object;
       },
-      isArray: Array.isArray,
+      isArray: Array.isArray || function (obj) {
+        return jQuery.type(obj) === "array";
+      },
       isFunction: function (obj) {
         return jQuery.type(obj) === "function";
+      },
+      isWindow:function (obj){
+        return jQuery.type(obj) === "window";
+      },
+      // 合法的数字且是有限大小的数字
+      isNumeric:function (val){
+        return jQuery.type(val) === "number" && isFinite(val);
       }
     });
 
